@@ -1,0 +1,44 @@
+---
+language: elixir
+elixir:
+  - 1.3.4
+otp_release:
+  - 19.1
+# https://github.com/travis-ci/travis-ci/issues/6116
+group: edge
+sudo: required
+dist: trusty
+addons:
+  apt:
+    packages:
+       - mysql-server-5.6
+       - mysql-client-core-5.6
+       - mysql-client-5.6
+branches:
+  only:
+    - master
+services:
+  - docker
+env:
+  global:
+    - secure: "S87PUnz8pNb5hKWcTsDWcPOeXDTTT6NSH4Jz4+LsNufUPzuv/c4x68Am91Yrfa+VpzZpT0SdhhFWTt2cDIB4jCvjl7EBW4pyIeliEpsFKCnZcgHH2DLrbPwbG0i+udU+EBVm6MowTfpRGXZkfMF0BplGlS2yswPSSo2DNEOGWkYsj/0XzlnGTMR6O2gcwyht7BZ7J4iCJCQpRmR8soO08VP9EQzTxY3pEDdICPG6pUc1EwSgs2WY3nwUNcAxtbw+M84+cGUjvJkRo8z19SMYel7TeOfcH/RksulFe5DvI4wutr6ziuSs3DPZslI2nz4LNZT3PWGeyn91DEIrfDiYYBuw0tLdtkJxdUCbaYyQYqkidagPSmj7Aqcp3FxWfipgM6y0P0t+9FqQtUWwFK+z7YTCp07kZ1O5lDd5Tc+6gWO7rhZrcTh5KfV04LNhoXa2bVKJqRJa1AlaU4Ca+oo37/0Hgm4P32OOzG3Q3ZM7w2QXZ3uTbpG3wVl4Sriw7c1qu4t+P0aY8h6tB3gEXF944gKzXrm8lbcDwEcuIwZUbG9ZHD9RLMTtnpld/ktSm6VEaF4OoNrg4Kzo+gCGCMwvVE9Z2gBGM6I3W5CFuR80LzVxerPkFXRQVErSBv8GNlNMlzmSb4zcTa8ETgl40b7dEtW6UaqgiXgwYGtbQBShFd8="
+cache:
+  directories:
+    - ~/travis-deps
+    - .plts
+before_install:
+  - sudo apt-get install default-jre
+  - curl https://raw.githubusercontent.com/PagerDuty/pd-travis-deps/master/zookeeper | /bin/sh
+  - curl https://raw.githubusercontent.com/PagerDuty/pd-travis-deps/master/kafka | /bin/sh
+before_script:
+  - ~/travis-deps/start-zookeeper.sh && sleep 3
+  - ~/travis-deps/start-kafka.sh && sleep 3
+  - ~/travis-deps/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --create --topic foo --zookeeper 127.0.0.1:2181 --partitions 1 --replication-factor 1
+  - mysql -u root -e 'CREATE DATABASE db2kafka'
+  - mysql -u root -e "GRANT ALL ON *.* TO 'root'@'localhost' IDENTIFIED BY ''"
+  - test -d .plts || mkdir .plts
+  - test -f .plts/local.plt || mix dialyzer.plt
+script:
+  - mix test --only unit --no-start
+  - mix test --only integration --no-start
+  - mix test --only logging --no-start

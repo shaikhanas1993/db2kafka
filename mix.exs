@@ -8,7 +8,10 @@ defmodule Db2Kafka.Mixfile do
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps
+     deps: deps,
+     dialyzer: [plt_file: ".plts/local.plt"],
+     description: "A MySQL to Kafka data pump",
+     package: package()
     ]
   end
 
@@ -28,7 +31,16 @@ defmodule Db2Kafka.Mixfile do
       {:ex_statsd, "~> 0.5.1"},
       {:poolboy, "~> 1.5"},
       {:dialyxir, "~> 0.3.5", only: [:dev]},
-      {:poison, "~> 2.0"}
+      {:poison, "~> 2.0"},
+      {:ex_doc, ">= 0.0.0", only: :dev}
     ]
+  end
+
+  defp package do
+    [maintainers: ["PagerDuty"],
+     licenses: ["MIT"],
+     links: %{
+      "GitHub": "https://github.com/PagerDuty/db2kafka",
+      "README": "https://github.com/PagerDuty/db2kafka/blob/master/README.md"}]
   end
 end

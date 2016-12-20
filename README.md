@@ -1,6 +1,6 @@
 # Db2Kafka
 
-[![Build Status](https://travis-ci.com/PagerDuty/web2kafka.svg?token=7Mi8LhmhpJYhzs4euq1w&branch=master)](https://travis-ci.com/PagerDuty/web2kafka)
+[![Build Status](https://travis-ci.org/PagerDuty/db2kafka.svg?branch=master)](https://travis-ci.org/PagerDuty/db2kafka)
 
 This service takes records from a database's `outbound_kafka_queue` table and
 ships them to Kafka.
