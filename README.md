@@ -18,9 +18,18 @@ Short version: `iex -S mix` to run the service in development; `mix test --only 
 
 #### MySQL
 
-(TODO schema support and migration. Use Ecto tooling?)
+Setup the various database environment variables as per config/ before proceeding. You need a table called `outbound_kafka_queue` in your database:
 
-Setup the various database environment variables as per config/ before proceeding.
+```sql
+CREATE TABLE `outbound_kafka_queue` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `topic` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `item_key` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `item_body` varbinary(60000) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
 
 #### Kafka
 
@@ -46,11 +55,9 @@ To speed up `dialyzer`, build a Persistent Lookup Table (PLT):
 
 #### Integration Tests
 
-- Create MySQL database*:
+- Create MySQL database (see above for schema);
 
-        (TODO database schema setup instructions)
-
-- Create Kafka topic*:
+- Create Kafka topic:
 
         kafka-topics.sh --zookeeper 127.0.0.1:2181 --create --topic foo --partitions 1 --replication-factor 1
 
