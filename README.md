@@ -12,8 +12,6 @@ ships them to Kafka.
 
 #### Elixir
 
-For Elixir development setup and standard project commands, see [Elixir Development Notes](https://pagerduty.atlassian.net/wiki/display/~div/Elixir+Development+Notes)
-
 Short version: `iex -S mix` to run the service in development; `mix test --only unit --no-start` to run unit tests
 
 #### MySQL
