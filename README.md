@@ -3,10 +3,21 @@
 [![Build Status](https://travis-ci.org/PagerDuty/db2kafka.svg?branch=master)](https://travis-ci.org/PagerDuty/db2kafka)
 
 This service takes records from a database's `outbound_kafka_queue` table and
-ships them to Kafka.
+ships them to Kafka. We developed it to solve an in-house problem: how do you
+move data into Kafka while keeping our Rails app's transactional boundaries?
+
+We are aware that this is a bit of a hack - using tables as queues always ends
+up in tears. However, it is a quick way to write data from Rails within the
+scope of a MySQL transaction, it is lighter weight and arguably more flexible
+than a binlog-based solution, and it works for us.
+
+Hopefully it works for you, too ;-)
+
+Note that documentation is mildly lacking at the moment, probably. We've been running
+this thing for a while, so it's all logical and straightforward to us. Feel free to raise
+issues if there's something specific missing so we can hone our efforts.
 
 ## Development
-
 
 ### Setup
 
