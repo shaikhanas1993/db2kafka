@@ -4,7 +4,7 @@ defmodule Db2Kafka.RecordBuffer do
 
   defstruct buckets: %{}, downstream_ids: %MapSet{}, fetching_records: false
 
-  @max_batch_size 3_000
+  @max_batch_size 100
 
   @records_served_metric "db2kafka.buffer.records_served"
   @duplicates_metric "db2kafka.buffer.duplicates"
