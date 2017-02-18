@@ -51,7 +51,7 @@ defmodule Db2Kafka.RecordPublisher do
     case result do
      [%KafkaEx.Protocol.Produce.Response{partitions: [%{error_code: 0}]}] ->
         Db2Kafka.Stats.incrementSuccess(@publish_records_metric)
-        _ = Logger.debug("Published batch of #{length(records)} records to topic #{topic} partition #{partition_id}")
+        _ = Logger.info("Published batch of #{length(records)} records to topic #{topic} partition #{partition_id}")
         Db2Kafka.Stats.incrementCountBy(@records_published_metric, length(records), ["topic:#{topic}"])
         Db2Kafka.Stats.timer(@publish_latency_metric, Db2Kafka.Record.age(Enum.at(records, -1)))
         {:reply, :ok, kafka_pid}
