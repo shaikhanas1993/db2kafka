@@ -31,9 +31,9 @@ before_install:
   - curl https://raw.githubusercontent.com/PagerDuty/pd-travis-deps/master/zookeeper | /bin/sh
   - curl https://raw.githubusercontent.com/PagerDuty/pd-travis-deps/master/kafka | /bin/sh
 before_script:
-  - ~/travis-deps/start-zookeeper.sh && sleep 3
-  - ~/travis-deps/start-kafka.sh && sleep 3
-  - ~/travis-deps/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --create --topic foo --zookeeper 127.0.0.1:2181 --partitions 1 --replication-factor 1
+  - ~/travis-deps/start-zookeeper.sh
+  - ~/travis-deps/start-kafka.sh
+  - ~/travis-deps/kafka/bin/kafka-topics.sh --create --topic foo --zookeeper 127.0.0.1:2181 --partitions 1 --replication-factor 1
   - mysql -u root -e 'CREATE DATABASE db2kafka'
   - mysql -u root -e "GRANT ALL ON *.* TO 'root'@'localhost' IDENTIFIED BY ''"
   - test -d .plts || mkdir .plts
