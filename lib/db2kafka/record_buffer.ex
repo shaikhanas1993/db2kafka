@@ -8,6 +8,7 @@ defmodule Db2Kafka.RecordBuffer do
 
   @records_served_metric "db2kafka.buffer.records_served"
   @duplicates_metric "db2kafka.buffer.duplicates"
+  @unknown_topic_records_metric "db2kafka.buffer.unknown_topic_records"
 
   @type record_result :: {:ok, [%Db2Kafka.Record{}]} | {:error, String.t | :no_record}
 
@@ -102,6 +103,7 @@ defmodule Db2Kafka.RecordBuffer do
     {records_in_known_topics, records_to_delete} = Enum.split_with(records, fn(r) -> Enum.member?(known_topics, r.topic) end)
 
     Db2Kafka.RecordDeleter.delete_records(records_to_delete)
+    Db2Kafka.Stats.incrementCountBy(@unknown_topic_records_metric, length(records_to_delete))
 
     buckets = records_to_ordered_topic_buckets(records_in_known_topics)
 
