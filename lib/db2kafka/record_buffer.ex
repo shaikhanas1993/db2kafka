@@ -97,7 +97,13 @@ defmodule Db2Kafka.RecordBuffer do
     downstream_ids = Enum.reduce(records, %MapSet{}, fn(r, d_ids) ->
       MapSet.put(d_ids, r.id)
     end)
-    buckets = records_to_ordered_topic_buckets(records)
+
+    known_topics = Application.get_env(:db2kafka, :topics)
+    {records_in_known_topics, records_to_delete} = Enum.split_with(records, fn(r) -> Enum.member?(known_topics, r.topic) end)
+
+    Db2Kafka.RecordDeleter.delete_records(records_to_delete)
+
+    buckets = records_to_ordered_topic_buckets(records_in_known_topics)
 
     {:noreply, %Db2Kafka.RecordBuffer{buckets: buckets, downstream_ids: downstream_ids, fetching_records: false}}
   end
