@@ -49,7 +49,7 @@ defmodule Db2Kafka.RecordDeleter do
     )
   end
 
-  def handle_cast({:delete_records, records}, _from, db_pid) do
+  def handle_cast({:delete_records, records}, db_pid) do
     do_delete_records(records, db_pid)
     {:noreply, db_pid}
   end
