@@ -44,7 +44,7 @@ defmodule Db2Kafka.RecordBufferTest do
 
   @tag :unit
   test_with_mock ":get_records_result only buckets records from a known topic, and deletes the others",
-    Db2Kafka.RecordDeleter, [], [delete_records: fn(_) -> {:ok, []} end] do
+    Db2Kafka.RecordDeleter, [], [delete_records: fn(_, _) -> {:ok, []} end] do
 
     known_topics = ["foo", "bar"]
 
@@ -64,7 +64,7 @@ defmodule Db2Kafka.RecordBufferTest do
 
       assert state1 == %Db2Kafka.RecordBuffer{buckets: expected_buckets, downstream_ids: expected_downstream_ids, fetching_records: false}
 
-      assert called Db2Kafka.RecordDeleter.delete_records([r3, r4])
+      assert called Db2Kafka.RecordDeleter.delete_records([r3, r4], false)
     end
   end
 

@@ -104,7 +104,7 @@ defmodule Db2Kafka.RecordBuffer do
 
     records_to_delete_length = length(records_to_delete)
     if records_to_delete_length > 0 do
-      Db2Kafka.RecordDeleter.delete_records(records_to_delete)
+      Db2Kafka.RecordDeleter.delete_records(records_to_delete, false)
       Db2Kafka.Stats.incrementCountBy(@unknown_topic_records_metric, records_to_delete_length)
     end
 
