@@ -35,7 +35,7 @@ defmodule Db2Kafka.RecordBufferTest do
 
     assert state1 == %Db2Kafka.RecordBuffer{buckets: %{}, downstream_ids: MapSet.new, fetching_records: false}
 
-    {:reply, _, state2} = Db2Kafka.RecordBuffer.handle_call({:get_records, :topic_foo}, self, state1)
+    {:reply, _, state2} = Db2Kafka.RecordBuffer.handle_call({:get_records, :topic_foo}, self(), state1)
 
     assert called Db2Kafka.RecordAccessor.get_records_async(:_, Db2Kafka.RecordBuffer.max_batch_size)
 

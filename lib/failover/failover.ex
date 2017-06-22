@@ -1,6 +1,3 @@
-# TODO: add specs
-# TODO: see what gets logged when we try to spinnup multiple instances in the same region
-
 defmodule Failover do
   @moduledoc """
   This module provides a GenServer that can be used to handle failover across
@@ -32,10 +29,10 @@ defmodule Failover do
 
   def start_link(instance_pid) do
     Logger.info("Initializing failover")
-    GenServer.start_link(__MODULE__, {instance_pid})
+    GenServer.start_link(__MODULE__, instance_pid)
   end
 
-  def init({instance_pid}) do
+  def init(instance_pid) do
     options =
       [
         monitor: self(),
@@ -45,7 +42,7 @@ defmodule Failover do
         disable_expire_reconnect: true,
       ]
 
-    zk_host = Application.get_env(:db2kafka, :zk_host) |> to_charlist
+    zk_host =  Application.get_env(:db2kafka, :zk_host) |> to_charlist
     zk_port = Application.get_env(:db2kafka, :zk_port) |> String.to_integer
     zk_hosts = [{zk_host, zk_port}]
     zk_session_timeout = 10000

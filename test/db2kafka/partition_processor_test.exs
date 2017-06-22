@@ -30,7 +30,7 @@ defmodule Db2Kafka.PartitionProcessor.Test do
   @tag :unit
   test "it sends itself a message to start getting records" do
     Db2Kafka.PartitionProcessor.init(["foo", 42])
-    assert_rescheduled
+    assert_rescheduled()
   end
 
   @tag :unit
@@ -47,7 +47,7 @@ defmodule Db2Kafka.PartitionProcessor.Test do
 
       assert called Db2Kafka.RecordPublisher.publish_records(topic, partition_id, [1])
       assert called Db2Kafka.RecordDeleter.delete_records([1])
-      assert_rescheduled
+      assert_rescheduled()
     end
     end
   end
@@ -66,7 +66,7 @@ defmodule Db2Kafka.PartitionProcessor.Test do
 
       assert called Db2Kafka.RecordPublisher.publish_records(topic, partition_id, ["retry test"])
       refute called Db2Kafka.RecordDeleter.delete_records(["retry test"])
-      assert_rescheduled
+      assert_rescheduled()
       assert called Db2Kafka.RecordPublisher.publish_records(topic, partition_id, ["retry test"])
     end
     end
@@ -88,7 +88,7 @@ defmodule Db2Kafka.PartitionProcessor.Test do
       refute called Db2Kafka.TopicBuffer.get_records
       assert called Db2Kafka.RecordPublisher.publish_records(topic, partition_id, records_to_retry)
       assert called Db2Kafka.RecordDeleter.delete_records(records_to_retry)
-      assert_rescheduled
+      assert_rescheduled()
     end
     end
   end
@@ -107,7 +107,7 @@ defmodule Db2Kafka.PartitionProcessor.Test do
 
       refute called Db2Kafka.RecordPublisher.publish_records(topic, partition_id, [1])
       assert called Db2Kafka.RecordDeleter.delete_records([1])
-      assert_rescheduled
+      assert_rescheduled()
     end
     end
   end
@@ -126,7 +126,7 @@ defmodule Db2Kafka.PartitionProcessor.Test do
 
       refute called Db2Kafka.RecordPublisher.publish_records(topic, partition_id, [])
       refute called Db2Kafka.RecordDeleter.delete_records([])
-      assert_rescheduled
+      assert_rescheduled()
     end
     end
   end

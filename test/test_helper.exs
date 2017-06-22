@@ -65,8 +65,6 @@ defmodule RecordCreator do
   use GenServer
   require Logger
 
-  @table "outbound_kafka_queue"
-
   def start_link do
     Logger.info("Starting RecordCreator")
     GenServer.start_link(__MODULE__, [], [name: __MODULE__])
@@ -111,6 +109,33 @@ defmodule DatabaseHelper do
     Process.exit(db_pid, :normal)
 
     :ok
+  end
+end
+
+defmodule FailoverHelper do
+  use GenServer
+
+  def start_link do
+    init_state = %{
+      doing_work: false
+    }
+    GenServer.start_link(__MODULE__, init_state)
+  end
+
+  def init(state) do
+    {:ok, state}
+  end
+
+  def handle_call(:is_working, _from, state) do
+    {:reply, state[:doing_work], state}
+  end
+  
+  def handle_call(:failover_start, _from, state) do
+    {:reply, :ok, %{state | doing_work: true}}
+  end
+
+  def handle_call(:failover_stop, _from, state) do
+    {:reply, :ok, %{state | doing_work: false}}
   end
 end
 
