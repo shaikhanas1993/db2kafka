@@ -43,6 +43,32 @@ defmodule Db2Kafka.RecordBufferTest do
   end
 
   @tag :unit
+  test_with_mock ":get_records_result only buckets records from a known topic, and deletes the others",
+    Db2Kafka.RecordDeleter, [], [delete_records: fn(_, _) -> {:ok, []} end] do
+
+    known_topics = ["foo", "bar"]
+
+    with_mock Application, [], [get_env: fn(_, _) -> known_topics end] do
+
+      r1 = %Db2Kafka.Record{id: 1, topic: "foo", partition_key: "k-1-f", body: "Abc"}
+      r2 = %Db2Kafka.Record{id: 2, topic: "bar", partition_key: "k-2-b", body: "Def"}
+      r3 = %Db2Kafka.Record{id: 3, topic: "baz", partition_key: "k-3-b", body: "Ghi"}
+      r4 = %Db2Kafka.Record{id: 4, topic: "baz", partition_key: "k-4-b", body: "Ghi"}
+
+      buckets0 = %{}
+
+      {:noreply, state1} = Db2Kafka.RecordBuffer.handle_cast({:get_records_result, {:ok, [r1, r2, r3, r4]}}, nil)
+
+      expected_buckets = Db2Kafka.RecordBuffer.records_to_ordered_topic_buckets([r1, r2])
+      expected_downstream_ids = make_downstream_ids([r1, r2, r3, r4])
+
+      assert state1 == %Db2Kafka.RecordBuffer{buckets: expected_buckets, downstream_ids: expected_downstream_ids, fetching_records: false}
+
+      assert called Db2Kafka.RecordDeleter.delete_records([r3, r4], false)
+    end
+  end
+
+  @tag :unit
   test "records_to_ordered_topic_buckets should group by topic, ordered by id" do
 
     records = [

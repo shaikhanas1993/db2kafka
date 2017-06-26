@@ -34,18 +34,32 @@ defmodule Db2Kafka.RecordDeleter do
     {:ok, db_pid}
   end
 
-  @spec delete_records(list(Db2Kafka.Record.t)) :: atom
-  def delete_records(records) do
+  @spec delete_records(list(Db2Kafka.Record.t), boolean) :: atom
+  def delete_records(records, sync \\ true) do
     :poolboy.transaction(
       Db2Kafka.Supervisor.deleter_pool_name,
       fn(pid) ->
-        GenServer.call(pid, {:delete_records, records})
+        if sync do
+          GenServer.call(pid, {:delete_records, records})
+        else
+          GenServer.cast(pid, {:delete_records, records})
+        end
       end,
       :infinity
     )
   end
 
+  def handle_cast({:delete_records, records}, db_pid) do
+    do_delete_records(records, db_pid)
+    {:noreply, db_pid}
+  end
+
   def handle_call({:delete_records, records}, _from, db_pid) do
+    result = do_delete_records(records, db_pid)
+    {:reply, result, db_pid}
+  end
+
+  def do_delete_records(records, db_pid) do
     joined_record_ids = Enum.map(records, fn(record) -> record.id end)
       |> Enum.join(", ")
 
@@ -77,6 +91,6 @@ defmodule Db2Kafka.RecordDeleter do
 
     :ok = Db2Kafka.RecordBuffer.remove_downstream_records(records)
 
-    {:reply, deletion_result, db_pid}
+    deletion_result
   end
 end

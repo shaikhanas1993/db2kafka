@@ -8,6 +8,7 @@ defmodule Db2Kafka.RecordBuffer do
 
   @records_served_metric "db2kafka.buffer.records_served"
   @duplicates_metric "db2kafka.buffer.duplicates"
+  @unknown_topic_records_metric "db2kafka.buffer.unknown_topic_records"
 
   @type record_result :: {:ok, [%Db2Kafka.Record{}]} | {:error, String.t | :no_record}
 
@@ -97,7 +98,17 @@ defmodule Db2Kafka.RecordBuffer do
     downstream_ids = Enum.reduce(records, %MapSet{}, fn(r, d_ids) ->
       MapSet.put(d_ids, r.id)
     end)
-    buckets = records_to_ordered_topic_buckets(records)
+
+    known_topics = Application.get_env(:db2kafka, :topics)
+    {records_in_known_topics, records_to_delete} = Enum.split_with(records, fn(r) -> Enum.member?(known_topics, r.topic) end)
+
+    records_to_delete_length = length(records_to_delete)
+    if records_to_delete_length > 0 do
+      Db2Kafka.RecordDeleter.delete_records(records_to_delete, false)
+      Db2Kafka.Stats.incrementCountBy(@unknown_topic_records_metric, records_to_delete_length)
+    end
+
+    buckets = records_to_ordered_topic_buckets(records_in_known_topics)
 
     {:noreply, %Db2Kafka.RecordBuffer{buckets: buckets, downstream_ids: downstream_ids, fetching_records: false}}
   end

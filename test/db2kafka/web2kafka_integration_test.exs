@@ -6,13 +6,18 @@ defmodule Db2Kafka.IntegrationTest do
 
   @moduletag :integration
 
+  @length_known_records 100
+
   @tag :integration
   setup do
     DatabaseHelper.drop_and_create_table
-    records = Enum.map(1..100, fn(n) ->
+    known_records = Enum.map(1..@length_known_records, fn(n) ->
       %Db2Kafka.Record{id: n, topic: "foo", partition_key: "123",
         body: "body#{n}", created_at: :os.system_time(:seconds)}
     end)
+    unknown_record = [%Db2Kafka.Record{id: 101, topic: "unknown", partition_key: "123",
+        body: "body", created_at: :os.system_time(:seconds)}]
+    records = Enum.concat(unknown_record, known_records)
     RecordCreator.start_link
     RecordCreator.create_records(records)
     Application.put_env(:db2kafka, :publish_to_kafka, true)
@@ -32,7 +37,7 @@ defmodule Db2Kafka.IntegrationTest do
   end
 
   @tag :integration
-  test "all records in the DB get published then deleted without duplicates", %{records: records} do
+  test "records for known topics in the DB get published then deleted without duplicates", %{records: records} do
     all_records_query = "select * from #{@table}"
     {:ok, db_pid} = TestHelpers.create_db_pid
 
@@ -46,7 +51,7 @@ defmodule Db2Kafka.IntegrationTest do
     assert_eventually(1_500, fn ->
       case KafkaEx.fetch("foo", 0, offset: starting_offset, auto_commit: false) do
         [%KafkaEx.Protocol.Fetch.Response{partitions: [%{message_set: messages}]}] ->
-          length(messages) == length(records)
+          length(messages) == @length_known_records
         _ ->
           false
       end
@@ -62,7 +67,7 @@ defmodule Db2Kafka.IntegrationTest do
     assert_eventually(500, fn ->
       case KafkaEx.fetch("foo", 0, offset: starting_offset + 1, auto_commit: false) do
         [%KafkaEx.Protocol.Fetch.Response{partitions: [%{message_set: messages}]}] ->
-          length(messages) == length(records)
+          length(messages) == @length_known_records
         _ ->
           false
       end
