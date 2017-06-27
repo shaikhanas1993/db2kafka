@@ -5,7 +5,7 @@ defmodule Db2Kafka.Mixfile do
   def project do
     [app: :db2kafka,
      version: "0.2.0",
-     elixir: "~> 1.4",
+     elixir: "~> 1.4.1",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps,
@@ -28,7 +28,7 @@ defmodule Db2Kafka.Mixfile do
       {:kafka_ex, "~> 0.5.0"},
       {:murmur, "~> 1.0"},
       {:mariaex, "~> 0.7.3"},
-      {:ex_statsd, "~> 0.5.1"},
+      {:ex_statsd, github: "PagerDuty/ex_statsd", ref: "a5c1aefd1d8d273e3910c2ae53c034669f792400"}, # Pulling in socket open fix
       {:poolboy, "~> 1.5"},
       {:dialyxir, "~> 0.3.5", only: [:dev]},
       {:poison, "~> 2.0"},
