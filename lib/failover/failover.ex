@@ -41,11 +41,12 @@ defmodule Failover do
         disable_watch_auto_reset: true,
         disable_expire_reconnect: true,
       ]
-
-    zk_host =  Application.get_env(:db2kafka, :zk_host) |> to_charlist
-    zk_port = Application.get_env(:db2kafka, :zk_port) |> String.to_integer
-    zk_hosts = [{zk_host, zk_port}]
+    
     zk_session_timeout = 10000
+    zk_hosts =
+       Application.get_env(:db2kafka, :zk_hosts)
+       |> Enum.map(fn {host, port} -> { to_charlist(host), port } end)
+
     {:ok, zk} = :erlzk_conn.start_link(zk_hosts, zk_session_timeout, options)
 
     initial_state = %{

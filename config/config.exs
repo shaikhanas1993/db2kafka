@@ -13,8 +13,11 @@ config :db2kafka,
   topics:      (System.get_env("TOPICS") || "foo") |> String.split(","), # Comma-separated list of topics
 
   # Failover configuration
-  zk_host: System.get_env("ZK_HOST") || "localhost",                     # ZK bootstrap host
-  zk_port: System.get_env("ZK_PORT") || "2181",                          # ZK port
+  zk_hosts: [                                                            # List known ZK hosts
+    { System.get_env("ZK_HOST") || "localhost",
+     (System.get_env("ZK_PORT") || "2181") |> String.to_integer
+    }
+  ],
   primary_region: System.get_env("PRIMARY_REGION") || "us-west-2",       # The preferred region
   region: System.get_env("REGION") || "us-west-2"                        # Region this app is running in
 
