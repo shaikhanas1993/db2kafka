@@ -117,7 +117,8 @@ defmodule FailoverHelper do
 
   def start_link do
     init_state = %{
-      doing_work: false
+      doing_work: false,
+      safe_to_do_work: false,
     }
     GenServer.start_link(__MODULE__, init_state)
   end
@@ -130,6 +131,10 @@ defmodule FailoverHelper do
     {:reply, state[:doing_work], state}
   end
   
+  def handle_call(:safe_to_work, _from, state) do
+    {:reply, state[:safe_to_do_work], state}
+  end
+  
   def handle_call(:failover_start, _from, state) do
     {:reply, :ok, %{state | doing_work: true}}
   end
@@ -137,7 +142,60 @@ defmodule FailoverHelper do
   def handle_call(:failover_stop, _from, state) do
     {:reply, :ok, %{state | doing_work: false}}
   end
+
+  def handle_cast(:failover_safe_to_start, state) do
+    {:noreply, %{state | safe_to_do_work: true}}
+  end
+
+  def handle_cast(:failover_unsafe_to_continue, state) do
+    {:noreply, %{state | safe_to_do_work: false}}
+  end
 end
+
+defmodule FailoverMocks do
+  import ExUnit.Assertions
+  import Mock
+  
+  @zk :c.pid(0, 240, 113)
+
+  def make_state() do
+    {:ok, failover_helper} = FailoverHelper.start_link()
+
+    {:ok, zk_helper} = with_mock :erlzk_conn, [start_link: fn(_, _, _) -> {:ok, @zk} end] do
+      Failover.ZKHelper.start_link(failover_helper)
+    end
+    
+    %{
+      zk_helper: zk_helper,
+      instance_pid: failover_helper,
+      instance_is_probably_doing_work: false,
+      barrier_path: "/db2kafka_failover_barrier"
+    }
+  end
+
+  def make_zkhelper_state() do
+    {:ok, failover_helper} = FailoverHelper.start_link()
+
+    %{zk: @zk, failover: failover_helper}
+  end
+
+  def mock_zk_create(:success) do
+    {:create, fn (_zk, path, _data, _acls, _type) -> {:ok, path} end}
+  end
+  
+  def mock_zk_create(:fail) do
+    {:create, fn (_zk, _path, _data, _acls, _type) -> {:error, :node_exists} end}
+  end
+  
+  def mock_zk_exists(:exists) do
+    {:exists, fn (_zk, _path, _watch, _watcher) -> {:ok, :dummy_node_stat} end}
+  end
+
+  def mock_zk_exists(:not_exists) do
+    {:exists, fn (_zk, _path, _watch, _watcher) -> {:error, :no_node} end}
+  end
+end
+
 
 Application.start(:ex_statsd)
 ExUnit.start([capture_log: true])

@@ -23,148 +23,47 @@ defmodule Failover do
   In any of these cases, your service should stop doing work, else you risk
   having both primary and failover instances doing work at the same time.
   """
-
-  use GenServer
   require Logger
-
+  
   def start_link(instance_pid) do
-    Logger.info("Initializing failover")
-    GenServer.start_link(__MODULE__, instance_pid)
+    barrier_path = Application.get_env(:db2kafka, :barrier_path)
+    primary_region = Application.get_env(:db2kafka, :primary_region)
+    region = Application.get_env(:db2kafka, :region)
+    
+    if primary_region == region do
+      Logger.info("Starting as primary (in #{region})")
+      Failover.Primary.start_link(instance_pid, barrier_path)
+    else
+      Logger.info("Starting as secondary (in #{region})")
+      Failover.Secondary.start_link(instance_pid, barrier_path)
+    end
   end
 
-  def init(instance_pid) do
-    options =
-      [
-        monitor: self(),
-        # We crash on zk session expire and disconnects and rely
-        # on restart to reinitialize us so we don't need these features
-        disable_watch_auto_reset: true,
-        disable_expire_reconnect: true,
-      ]
+  # Common functionality across all failover run modes
+  
+  def init_state(instance_pid, barrier_path) do
+    {:ok, zk_helper} = Failover.ZKHelper.start_link(self())
     
-    zk_session_timeout = 10000
-    zk_hosts =
-       Application.get_env(:db2kafka, :zk_hosts)
-       |> Enum.map(fn {host, port} -> { to_charlist(host), port } end)
-
-    {:ok, zk} = :erlzk_conn.start_link(zk_hosts, zk_session_timeout, options)
-
     initial_state = %{
-      zk: zk,
+      zk_helper: zk_helper,
       instance_pid: instance_pid,
       instance_is_probably_doing_work: false,
-      primary_region: Application.get_env(:db2kafka, :primary_region),
-      region: Application.get_env(:db2kafka, :region),
+      barrier_path: barrier_path,
     }
     {:ok, initial_state}
   end
-
-  def handle_info({:connected, host, port}, state) do
-    Logger.info("Connected to ZK, host: #{inspect host}:#{inspect port}")
-    post_zk_connect_init(state)
-  end
-
-  def handle_info({:disconnected, host, port}, state) do
-    Logger.info("Disconnected from ZK, host: #{inspect host}:#{inspect port}")
-    {:ok, state} = stop_app(state)
-    {:stop, :zk_disconnected, state}
-  end
-
-  def handle_info({:expired, host, port}, state) do
-    Logger.info("ZK session expired, host: #{inspect host}:#{inspect port}")
-    {:ok, state} = stop_app(state)
-    {:stop, :zk_session_expired, state}
-  end
-
-  def handle_info({:node_created, path}, state) do
-    Logger.info("Barrier came up: #{inspect path}, stopping failover region")
-    {:ok, state} = stop_app(state)
-    prepare_failover(state)
-  end
-
-  def handle_info({:node_deleted, path}, state) do
-    Logger.info("Barrier came down: #{inspect path}, starting failover region")
-    prepare_failover(state)
-  end
-
-  defp post_zk_connect_init(state) do
-    %{primary_region: primary_region, region: region} = state
-
-    if primary_region == region do
-      Logger.info("Attempting to start primary region")
-      prepare_primary(state)
-    else
-      Logger.info("Attempting to start failover region")
-      prepare_failover(state)
-    end
-  end
-
-  defp prepare_primary(%{zk: zk}=state) do
-    Logger.info("Attempting to create barrier #{inspect barrier_path(state)}")
-    case create_barrier(zk, barrier_path(state)) do
-      {:ok, path} ->
-        Logger.info("Created barrier #{path}, starting primary region")
-        {:ok, state} = start_app(state)
-        {:noreply, state}
-      {:error, reason} ->
-        # For all the error values see:
-        # https://github.com/huaban/erlzk/blob/master/src/erlzk.erl#L154
-        #
-        # The error we will most likely receive is :node_exists.
-        # This can happen if the instance dies and restarts before the zk
-        # session expires. In that case the barrier node will still exist
-        # as the nodes life is tied to the session life.
-        #
-        # This can also happen if the primary instance is already running
-        #
-        # To handle this we crash and rely on the cluster manager to restart
-        # us, hopefully the situation is better on next startup
-        Logger.info("Failed to create barrier, reason: #{inspect reason}")
-        {:stop, :failed_to_create_barrier, state}
-    end
-  end
-
-  defp prepare_failover(%{zk: zk}=state) do
-    Logger.info("Checking state of barrier #{inspect barrier_path(state)}")
-    case watch_barrier(zk, barrier_path(state)) do
-      {:ok, _stat} ->
-        Logger.info("Barrier exists, waiting for barrier to go down")
-        {:noreply, state}
-      {:error, :no_node} ->
-        Logger.info("No barrier, this implies primary is down")
-        {:ok, state} = start_app(state)
-        {:noreply, state}
-    end
-  end
-
-  defp barrier_path(%{primary_region: primary_region}) do
-    "/failover_#{primary_region}"
-  end
-
-  defp start_app(%{instance_pid: pid}=state) do
-    Logger.info("Starting app (in #{inspect state[:region]})")
-    :ok = GenServer.call(pid, :failover_start)
+  
+  def start_app(state) do
+    Logger.info("Starting app")
+    :ok = GenServer.call(state[:instance_pid], :failover_start)
     {:ok, %{state | instance_is_probably_doing_work: true}}
   end
 
-  defp stop_app(%{instance_pid: pid}=state) do
+  def stop_app(state) do
     if state[:instance_is_probably_doing_work] do
-      Logger.info("Stopping app (in #{inspect state[:region]})")
-      :ok = GenServer.call(pid, :failover_stop)
+      Logger.info("Stopping app")
+      :ok = GenServer.call(state[:instance_pid], :failover_stop)
     end
     {:ok, %{state | instance_is_probably_doing_work: false}}
-  end
-
-  defp create_barrier(zk, path) do
-    acl = {:rwcda, 'world', 'anyone'}
-    
-    case :erlzk_conn.create(zk, to_charlist(path), "", [acl], :ephemeral) do
-      {:ok, path} -> {:ok, to_string(path)}
-      error -> error
-    end
-  end
-
-  defp watch_barrier(zk, path) do
-    :erlzk_conn.exists(zk, to_charlist(path), true, self())
   end
 end

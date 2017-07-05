@@ -18,6 +18,7 @@ config :db2kafka,
      (System.get_env("ZK_PORT") || "2181") |> String.to_integer
     }
   ],
+  barrier_path: "/db2kafka_failover_barrier",
   primary_region: System.get_env("PRIMARY_REGION") || "us-west-2",       # The preferred region
   region: System.get_env("REGION") || "us-west-2"                        # Region this app is running in
 
