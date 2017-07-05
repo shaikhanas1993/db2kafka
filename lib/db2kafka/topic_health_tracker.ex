@@ -30,7 +30,7 @@ defmodule Db2Kafka.TopicHealthTracker do
   end
 
   def init({topic, num_partitions}) do
-    start_time = current_unix_time
+    start_time = current_unix_time()
     # start by assuming every partition is OK, to ensure we don't shutdown immediately after the first error
     partitions_status = Map.new(0..(num_partitions - 1), fn(p) -> {p, start_time} end)
     state = %Db2Kafka.TopicHealthTracker{topic: topic, partitions_status: partitions_status}
@@ -41,7 +41,7 @@ defmodule Db2Kafka.TopicHealthTracker do
   @spec report_partition_ok(String.t, non_neg_integer) :: :ok
   def report_partition_ok(topic, partition) do
     name = genserver_name(topic)
-    GenServer.cast(name, {:report_partition_status, partition, current_unix_time})
+    GenServer.cast(name, {:report_partition_status, partition, current_unix_time()})
   end
 
   @spec report_partition_error(String.t, non_neg_integer) :: :ok
@@ -58,7 +58,7 @@ defmodule Db2Kafka.TopicHealthTracker do
     end
 
     new_partition_status = case status do
-      :ok -> current_unix_time
+      :ok -> current_unix_time()
       s -> s
     end
 
@@ -70,7 +70,7 @@ defmodule Db2Kafka.TopicHealthTracker do
   defp crash_if_no_progress_being_made(topic, partitions_status) do
     progress_partition = partitions_status
       |> Enum.filter(fn({_, status}) -> status != :error end)
-      |> Enum.find(fn({_, last_ok_time}) -> (current_unix_time - last_ok_time) < @progress_period_s end)
+      |> Enum.find(fn({_, last_ok_time}) -> (current_unix_time() - last_ok_time) < @progress_period_s end)
 
     if progress_partition == nil do
       _ = Logger.error("No partitions are making progress in topic #{topic} for #{@progress_period_s} seconds... terminating!")
