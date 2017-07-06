@@ -10,7 +10,7 @@ defmodule Failover.Test do
       Failover.init_state(self(), "/test_db2kafka_barrier")
     end
 
-    assert state[:zk_helper] != nil
+    assert state[:zk_barrier] != nil
     assert state[:instance_pid] == self()
     assert state[:instance_is_probably_doing_work] == false
     assert state[:barrier_path] == "/test_db2kafka_barrier"

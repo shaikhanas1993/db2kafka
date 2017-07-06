@@ -12,7 +12,7 @@ defmodule Failover.Secondary.Test do
     assert GenServer.call(state[:instance_pid], :is_working) == false
 
     {:noreply, state} = with_mock :erlzk_conn, [mock_zk_exists(:not_exists)] do
-      Secondary.handle_cast(:failover_safe_to_start, state)
+      Secondary.handle_cast(:zk_session_ready, state)
     end
     
     assert GenServer.call(state[:instance_pid], :is_working) == true
@@ -25,7 +25,7 @@ defmodule Failover.Secondary.Test do
     assert GenServer.call(state[:instance_pid], :is_working) == false
 
     {:noreply, state} = with_mock :erlzk_conn, [mock_zk_exists(:exists)] do
-      Secondary.handle_cast(:failover_safe_to_start, state)
+      Secondary.handle_cast(:zk_session_ready, state)
     end
     
     assert GenServer.call(state[:instance_pid], :is_working) == false
@@ -38,7 +38,7 @@ defmodule Failover.Secondary.Test do
     assert GenServer.call(state[:instance_pid], :is_working) == false
     
     {:noreply, state} = with_mock :erlzk_conn, [mock_zk_exists(:not_exists)] do
-      Secondary.handle_info({:node_deleted, to_charlist(state[:barrier_path])}, state)
+      Secondary.handle_info(:barrier_came_down, state)
     end
     
     assert GenServer.call(state[:instance_pid], :is_working) == true
@@ -51,13 +51,13 @@ defmodule Failover.Secondary.Test do
     assert GenServer.call(state[:instance_pid], :is_working) == false
 
     {:noreply, state} = with_mock :erlzk_conn, [mock_zk_exists(:not_exists)] do
-      Secondary.handle_cast(:failover_safe_to_start, state)
+      Secondary.handle_cast(:zk_session_ready, state)
     end
     
     assert GenServer.call(state[:instance_pid], :is_working) == true
 
     {:noreply, state} = with_mock :erlzk_conn, [mock_zk_exists(:exists)] do
-      Secondary.handle_info({:node_created, to_charlist(state[:barrier_path])}, state)
+      Secondary.handle_info(:barrier_came_up, state)
     end
     
     assert GenServer.call(state[:instance_pid], :is_working) == false

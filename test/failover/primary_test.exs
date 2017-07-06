@@ -13,12 +13,12 @@ defmodule Failover.Primary.Test do
     assert GenServer.call(state[:instance_pid], :is_working) == false
     
     {:noreply, state} = with_mock :erlzk_conn, [mock_zk_create(:success)] do
-      Primary.handle_cast(:failover_safe_to_start, state)
+      Primary.handle_cast(:zk_session_ready, state)
     end
 
     assert GenServer.call(state[:instance_pid], :is_working) == true
     
-    {:stop, :zk_disconnected, state} = Primary.handle_cast(:failover_unsafe_to_continue, state)
+    {:stop, :zk_disconnected, state} = Primary.handle_cast(:zk_state_uncertain, state)
     
     assert GenServer.call(state[:instance_pid], :is_working) == false
   end

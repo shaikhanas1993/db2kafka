@@ -11,40 +11,40 @@ defmodule Failover.Secondary do
     Failover.init_state(instance_pid, barrier_path)
   end
 
-  def handle_cast(:failover_safe_to_start, state) do
+  def handle_cast(:zk_session_ready, state) do
     Logger.info("Received go-ahead from zk helper")
     {:ok, state} = prepare_failover(state)
     {:noreply, state}
   end
 
-  def handle_cast(:failover_unsafe_to_continue, state) do
+  def handle_cast(:zk_state_uncertain, state) do
     Logger.info("Unsafe to continue working, shutting down")
     {:ok, state} = Failover.stop_app(state)
     {:stop, :zk_disconnected, state}
   end
 
-  def handle_info({:node_created, path}, state) do
-    Logger.info("Barrier came up: #{inspect path}, stopping failover region")
+  def handle_info(:barrier_came_up, state) do
+    Logger.info("Barrier came up, stopping failover region")
     {:ok, state} = Failover.stop_app(state)
     {:ok, state} = prepare_failover(state)
     {:noreply, state}
   end
 
-  def handle_info({:node_deleted, path}, state) do
-    Logger.info("Barrier came down: #{inspect path}, starting failover region")
+  def handle_info(:barrier_came_down, state) do
+    Logger.info("Barrier came down, starting failover region")
     {:ok, state} = prepare_failover(state)
     {:noreply, state}
   end
 
-  defp prepare_failover(%{zk_helper: zk_helper, barrier_path: barrier_path}=state) do
+  defp prepare_failover(%{zk_barrier: zk_barrier, barrier_path: barrier_path}=state) do
     Logger.info("Checking state of barrier #{inspect barrier_path}")
-    res = GenServer.call(zk_helper, {:watch_barrier, barrier_path, self()})
+    res = GenServer.call(zk_barrier, {:watch_barrier, barrier_path, self()})
     case res do
-      {:ok, _stat} ->
+      :barrier_is_up ->
         Logger.info("Barrier exists, waiting for barrier to go down")
         {:ok, state}
-      {:error, :no_node} ->
-        Logger.info("No barrier, this implies primary is down")
+      :barrier_is_down ->
+        Logger.info("No barrier, this implies primary is down, starting secondary")
         {:ok, state} = Failover.start_app(state)
         {:ok, state}
     end

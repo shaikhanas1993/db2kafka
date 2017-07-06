@@ -143,11 +143,11 @@ defmodule FailoverHelper do
     {:reply, :ok, %{state | doing_work: false}}
   end
 
-  def handle_cast(:failover_safe_to_start, state) do
+  def handle_cast(:zk_session_ready, state) do
     {:noreply, %{state | safe_to_do_work: true}}
   end
 
-  def handle_cast(:failover_unsafe_to_continue, state) do
+  def handle_cast(:zk_state_uncertain, state) do
     {:noreply, %{state | safe_to_do_work: false}}
   end
 end
@@ -161,22 +161,22 @@ defmodule FailoverMocks do
   def make_state() do
     {:ok, failover_helper} = FailoverHelper.start_link()
 
-    {:ok, zk_helper} = with_mock :erlzk_conn, [start_link: fn(_, _, _) -> {:ok, @zk} end] do
-      Failover.ZKHelper.start_link(failover_helper)
+    {:ok, zk_barrier} = with_mock :erlzk_conn, [start_link: fn(_, _, _) -> {:ok, @zk} end] do
+      Failover.ZKBarrier.start_link(failover_helper)
     end
     
     %{
-      zk_helper: zk_helper,
+      zk_barrier: zk_barrier,
       instance_pid: failover_helper,
       instance_is_probably_doing_work: false,
       barrier_path: "/db2kafka_failover_barrier"
     }
   end
 
-  def make_zkhelper_state() do
+  def make_zk_barrier_state() do
     {:ok, failover_helper} = FailoverHelper.start_link()
 
-    %{zk: @zk, failover: failover_helper}
+    %{zk: @zk, monitor: failover_helper}
   end
 
   def mock_zk_create(:success) do
@@ -195,7 +195,6 @@ defmodule FailoverMocks do
     {:exists, fn (_zk, _path, _watch, _watcher) -> {:error, :no_node} end}
   end
 end
-
 
 Application.start(:ex_statsd)
 ExUnit.start([capture_log: true])

@@ -11,22 +11,22 @@ defmodule Failover.Primary do
     Failover.init_state(instance_pid, barrier_path)
   end
 
-  def handle_cast(:failover_safe_to_start, state) do
+  def handle_cast(:zk_session_ready, state) do
     Logger.info("Received go-ahead from zk helper, preparing to start working")
     {:ok, state} = prepare_failover(state)
     {:noreply, state}
   end
 
-  def handle_cast(:failover_unsafe_to_continue, state) do
+  def handle_cast(:zk_state_uncertain, state) do
     Logger.info("Unsafe to continue working, shutting down")
     {:ok, state} = Failover.stop_app(state)
     {:stop, :zk_disconnected, state}
   end
 
-  defp prepare_failover(%{zk_helper: zk_helper, barrier_path: barrier_path}=state) do
+  defp prepare_failover(%{zk_barrier: zk_barrier, barrier_path: barrier_path}=state) do
     Logger.info("Attempting to create barrier #{inspect barrier_path}")
 
-    res = GenServer.call(zk_helper, {:create_barrier, barrier_path})
+    res = GenServer.call(zk_barrier, {:create_barrier, barrier_path})
     
     case res do
       {:ok, path} ->

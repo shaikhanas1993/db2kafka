@@ -42,10 +42,10 @@ defmodule Failover do
   # Common functionality across all failover run modes
   
   def init_state(instance_pid, barrier_path) do
-    {:ok, zk_helper} = Failover.ZKHelper.start_link(self())
+    {:ok, zk_barrier} = Failover.ZKBarrier.start_link(self())
     
     initial_state = %{
-      zk_helper: zk_helper,
+      zk_barrier: zk_barrier,
       instance_pid: instance_pid,
       instance_is_probably_doing_work: false,
       barrier_path: barrier_path,
