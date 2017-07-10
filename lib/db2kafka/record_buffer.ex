@@ -7,7 +7,6 @@ defmodule Db2Kafka.RecordBuffer do
   @max_batch_size 3_000
 
   @records_served_metric "db2kafka.buffer.records_served"
-  @duplicates_metric "db2kafka.buffer.duplicates"
   @unknown_topic_records_metric "db2kafka.buffer.unknown_topic_records"
 
   @type record_result :: {:ok, [%Db2Kafka.Record{}]} | {:error, String.t | :no_record}

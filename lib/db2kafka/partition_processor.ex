@@ -3,7 +3,6 @@ defmodule Db2Kafka.PartitionProcessor do
   use Bitwise
   require Logger
 
-  @full_trip_metric "db2kafka.full_trip"
   @default_delay_ms 10
   @max_delay_ms 10_000
 
@@ -76,6 +75,6 @@ defmodule Db2Kafka.PartitionProcessor do
   end
 
   defp schedule_publish_and_delete(delay) do
-    Process.send_after(self, :publish_and_delete, delay)
+    Process.send_after(self(), :publish_and_delete, delay)
   end
 end

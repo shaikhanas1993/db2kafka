@@ -46,7 +46,7 @@ defmodule Db2Kafka.RecordPublisherTest do
   test_with_mock "it publishes records",
       %{records: records, partition: partition, topic: topic, kafka_ex_mock: kafka_ex_mock},
       KafkaEx, [], kafka_ex_mock do
-    Db2Kafka.RecordPublisher.handle_call({:publish_records, topic, partition, records}, self, :kafka_pid)
+    Db2Kafka.RecordPublisher.handle_call({:publish_records, topic, partition, records}, self(), :kafka_pid)
     assert_eventually(fn -> called(KafkaEx.produce(:_, [worker_name: :kafka_pid])) end)
   end
 end

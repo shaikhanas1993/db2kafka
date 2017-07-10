@@ -37,7 +37,7 @@ defmodule Db2Kafka.IntegrationTest do
   end
 
   @tag :integration
-  test "records for known topics in the DB get published then deleted without duplicates", %{records: records} do
+  test "records for known topics in the DB get published then deleted without duplicates" do
     all_records_query = "select * from #{@table}"
     {:ok, db_pid} = TestHelpers.create_db_pid
 

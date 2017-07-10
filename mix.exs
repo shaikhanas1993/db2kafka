@@ -4,11 +4,11 @@ defmodule Db2Kafka.Mixfile do
 
   def project do
     [app: :db2kafka,
-     version: "0.3.0",
+     version: "0.4.0",
      elixir: "~> 1.4.1",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps,
+     deps: deps(),
      dialyzer: [plt_file: ".plts/local.plt"],
      description: "A MySQL to Kafka data pump",
      package: package()
@@ -17,7 +17,7 @@ defmodule Db2Kafka.Mixfile do
 
   def application do
     [applications: [:logger, :kafka_ex, :ex_statsd, :crypto, :poolboy],
-     included_applications: [ :mariaex, :murmur, :poison],
+     included_applications: [:mariaex, :murmur, :poison, :erlzk],
      mod: {Db2Kafka, []}
     ]
   end
@@ -32,7 +32,8 @@ defmodule Db2Kafka.Mixfile do
       {:poolboy, "~> 1.5"},
       {:dialyxir, "~> 0.3.5", only: [:dev]},
       {:poison, "~> 2.0"},
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:erlzk, "~> 0.6.3"}
     ]
   end
 

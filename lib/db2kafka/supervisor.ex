@@ -25,25 +25,25 @@ defmodule Db2Kafka.Supervisor do
     children = children ++ [worker(Db2Kafka.RecordBuffer, [])]
 
     deleter_pool_config = [
-      {:name, {:local, deleter_pool_name}},
+      {:name, {:local, deleter_pool_name()}},
       {:worker_module, Db2Kafka.RecordDeleter},
       {:size, Application.get_env(:db2kafka, :deleter_pool_size)},
       {:max_overflow, 0}
     ]
 
     publisher_pool_config = [
-      {:name, {:local, publisher_pool_name}},
+      {:name, {:local, publisher_pool_name()}},
       {:worker_module, Db2Kafka.RecordPublisher},
       {:size, Application.get_env(:db2kafka, :publisher_pool_size)},
       {:max_overflow, 5}
     ]
 
     children = children ++ [
-      :poolboy.child_spec(deleter_pool_name, deleter_pool_config, [])
+      :poolboy.child_spec(deleter_pool_name(), deleter_pool_config, [])
     ]
 
     children = children ++ [
-      :poolboy.child_spec(publisher_pool_name, publisher_pool_config, [])
+      :poolboy.child_spec(publisher_pool_name(), publisher_pool_config, [])
     ]
 
     children = children ++ Enum.map(topics, fn(topic) ->

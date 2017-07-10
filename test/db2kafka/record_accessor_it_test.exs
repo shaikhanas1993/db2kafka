@@ -1,8 +1,6 @@
 defmodule RecordAccessor.IntegrationTest do
   use ExUnit.Case
 
-  @table "outbound_kafka_queue"
-
   setup_all do
     RecordCreator.start_link
     Db2Kafka.RecordAccessor.start_link
@@ -60,7 +58,7 @@ defmodule RecordAccessor.IntegrationTest do
 
     id_space_partition_size = 42
 
-    assert Db2Kafka.RecordAccessor.get_records_async(self, id_space_partition_size) == :ok
+    assert Db2Kafka.RecordAccessor.get_records_async(self(), id_space_partition_size) == :ok
 
     receive do
       {:"$gen_cast", {:get_records_result, {:ok, records}}} ->
@@ -76,7 +74,7 @@ defmodule RecordAccessor.IntegrationTest do
     RecordCreator.create_records([%Db2Kafka.Record{id: 1, topic: "foo", partition_key: "123", body: "bar",
        created_at: created_at_sec - 60}])
 
-    assert Db2Kafka.RecordAccessor.get_records_async(self, 100) == :ok
+    assert Db2Kafka.RecordAccessor.get_records_async(self(), 100) == :ok
 
     receive do
       {:"$gen_cast", {:get_records_result, {:ok, [record | _]}}} ->

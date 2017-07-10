@@ -29,7 +29,7 @@ defmodule Db2Kafka.TopicBufferTest do
 
     old_state = %Db2Kafka.TopicBuffer{num_partitions: 3, partitions: partitions}
 
-    {:reply, {:ok, records}, new_state} = Db2Kafka.TopicBuffer.handle_call({:get_records, "foo", 2}, self, old_state)
+    {:reply, {:ok, records}, new_state} = Db2Kafka.TopicBuffer.handle_call({:get_records, "foo", 2}, self(), old_state)
 
     assert [%Db2Kafka.Record{id: 6, topic: "foo", partition_key: "2"}] == records
     assert new_state.num_partitions == 3
@@ -69,7 +69,7 @@ defmodule Db2Kafka.TopicBufferTest do
         }
       }
 
-      {:reply, {:ok, records}, new_state} = Db2Kafka.TopicBuffer.handle_call({:get_records, "foo", 2}, self, old_state)
+      {:reply, {:ok, records}, new_state} = Db2Kafka.TopicBuffer.handle_call({:get_records, "foo", 2}, self(), old_state)
 
       assert records == [
         %Db2Kafka.Record{id: 6, topic: "foo", partition_key: "22"}
