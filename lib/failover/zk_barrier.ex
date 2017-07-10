@@ -7,12 +7,12 @@ defmodule Failover.ZKBarrier do
   handle_cast(:zk_session_ready, state)   # sent once our ZK session is active
   handle_cast(:zk_state_uncertain, state) # sent when our ZK session has expired or we've lost our ZK connection
   """
-  
+
   use GenServer
   require Logger
 
   def start_link(monitor) do
-    Logger.info("Initializing failover ZKHelper")
+    Logger.info("Initializing failover ZKBarrier")
     GenServer.start_link(__MODULE__, monitor)
   end
 
@@ -25,7 +25,7 @@ defmodule Failover.ZKBarrier do
         disable_watch_auto_reset: true,
         disable_expire_reconnect: true,
       ]
-    
+
     zk_session_timeout = 10000
     zk_hosts =
        Application.get_env(:db2kafka, :zk_hosts)
@@ -88,9 +88,9 @@ defmodule Failover.ZKBarrier do
 
   defp create_barrier(zk, path) do
     acl = {:rwcda, 'world', 'anyone'}
-    
+
     res = :erlzk_conn.create(zk, to_charlist(path), "", [acl], :ephemeral)
-    
+
     case res do
       {:ok, path} -> {:ok, to_string(path)}
       error -> error
@@ -104,7 +104,7 @@ defmodule Failover.ZKBarrier do
 	{:node_deleted, _path} -> send(watcher, :barrier_came_down)
       end
     end
-    
+
     res = :erlzk_conn.exists(zk, to_charlist(path), true, spawn erlzk_message_translator)
     case res do
       {:ok, _stat} -> :barrier_is_up
