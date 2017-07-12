@@ -13,19 +13,18 @@ defmodule Db2Kafka.RecordPublisherTest do
   end
 
   setup do
-    records = [%Db2Kafka.Record{id: 1, created_at: :erlang.system_time},
-               %Db2Kafka.Record{id: 2, created_at: :erlang.system_time}]
+    records = [%Db2Kafka.Record{id: 1, created_at: :erlang.system_time, body: "body1"},
+               %Db2Kafka.Record{id: 2, created_at: :erlang.system_time, body: "body2"}]
+    records_mapped = [
+      {"", "body1"},
+      {"", "body2"},
+    ]
+
     topic = "foo"
     partition = 0
 
-    kafka_ex_mock = [
-      produce: fn(_, _) -> [%KafkaEx.Protocol.Produce.Response{partitions: [%{error_code: 0, offset: 101, partition: 0}], topic: topic}] end,
-      metadata: fn(^topic) -> %MockMetadataResponse{
-        topic_metadatas: [%MockTopicMetadataResponse{
-          partition_metadatas: [1]
-        }]
-      } end,
-      create_worker: fn(_) -> {:ok, :worker} end
+    kaffe_producer_mock = [
+      produce_sync: fn(_, _, _) -> :ok end
     ]
 
     topic_buffer_mock = [
@@ -35,18 +34,19 @@ defmodule Db2Kafka.RecordPublisherTest do
     {
       :ok,
       records: records,
+      records_mapped: records_mapped,
       partition: partition,
       topic: topic,
-      kafka_ex_mock: kafka_ex_mock,
+      kaffe_producer_mock: kaffe_producer_mock,
       topic_buffer_mock: topic_buffer_mock
     }
   end
 
   @tag :unit
   test_with_mock "it publishes records",
-      %{records: records, partition: partition, topic: topic, kafka_ex_mock: kafka_ex_mock},
-      KafkaEx, [], kafka_ex_mock do
+      %{records: records, records_mapped: records_mapped, partition: partition, topic: topic, kaffe_producer_mock: kaffe_producer_mock},
+      Kaffe.Producer, [], kaffe_producer_mock do
     Db2Kafka.RecordPublisher.handle_call({:publish_records, topic, partition, records}, self(), :kafka_pid)
-    assert_eventually(fn -> called(KafkaEx.produce(:_, [worker_name: :kafka_pid])) end)
+    assert_eventually(fn -> called(Kaffe.Producer.produce_sync(topic, partition, records_mapped)) end)
   end
 end

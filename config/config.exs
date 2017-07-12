@@ -24,12 +24,13 @@ config :db2kafka,
   publish_latency_sla_95perc_threshold_ms: 10000,
   publish_latency_sla_max_threshold_ms: 30000
 
-config :kafka_ex,
-  brokers: [
-    { System.get_env("BROKER_HOST") || "localhost",                      # A Kafka bootstrap broker hostname
-     (System.get_env("BROKER_PORT") || "9092") |> String.to_integer}     # A Kafka bootstrap broker port
-  ],
-  # Tweak kafka_ex for our needs - don't override unless you know exactly what's going on!
-  consumer_group: :no_consumer_group,
-  disable_default_worker: false
-
+config :kaffe,
+  producer: [
+    endpoints: [
+      {((System.get_env("BROKER_HOST") || "localhost") |> String.to_atom),
+        (System.get_env("BROKER_PORT") || "9092") |> String.to_integer
+      }
+    ], # [hostname: port]
+    required_acks: -1,
+    topics: (System.get_env("TOPICS") || "foo") |> String.split(","),
+  ]

@@ -57,6 +57,7 @@ defmodule TestHelpers do
     Logger.info("Starting applications")
     Db2Kafka.Mixfile.application[:applications]
       |> Enum.map(&Application.start(&1))
+      Application.ensure_all_started(:kaffe)
     Db2Kafka.start
   end
 end

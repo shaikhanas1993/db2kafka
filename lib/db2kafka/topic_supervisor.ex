@@ -10,8 +10,12 @@ defmodule Db2Kafka.TopicSupervisor do
   end
 
   defp get_num_partitions(topic) do
-    topic_metadata = hd(KafkaEx.metadata(topic: topic).topic_metadatas)
-    length(topic_metadata.partition_metadatas)
+    endpoints = Application.get_env(:kaffe, :producer)[:endpoints]
+    {:ok, metadata} = :brod.get_metadata(endpoints, [topic])
+    {:kpro_MetadataResponse, _ ,
+      [{:kpro_TopicMetadata, _, ^topic, partition_metadata}]} = metadata
+
+    length(partition_metadata)
   end
 
   def init(topic) do
