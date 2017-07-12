@@ -41,16 +41,13 @@ defmodule Db2Kafka.IntegrationTest do
     all_records_query = "select * from #{@table}"
     {:ok, db_pid} = TestHelpers.create_db_pid
 
-    starting_offset = KafkaEx.latest_offset("foo", 0)
-      |> Enum.at(0)
-      |> (fn(response) -> response.partition_offsets end).()
-      |> Enum.at(0)
-      |> (fn(offsets) -> offsets.offset end).()
-      |> Enum.at(0)
+    endpoints = Application.get_env(:kaffe, :producer)[:endpoints]
+
+    {:ok, [starting_offset]} = :brod.get_offsets(endpoints, "foo", 0)
 
     assert_eventually(1_500, fn ->
-      case KafkaEx.fetch("foo", 0, offset: starting_offset, auto_commit: false) do
-        [%KafkaEx.Protocol.Fetch.Response{partitions: [%{message_set: messages}]}] ->
+      case :brod.fetch(endpoints, "foo", 0, starting_offset) do
+        {:ok, messages} ->
           length(messages) == @length_known_records
         _ ->
           false
@@ -65,8 +62,8 @@ defmodule Db2Kafka.IntegrationTest do
       partition_key: "123", body: "body0", created_at: :os.system_time(:seconds)}])
 
     assert_eventually(500, fn ->
-      case KafkaEx.fetch("foo", 0, offset: starting_offset + 1, auto_commit: false) do
-        [%KafkaEx.Protocol.Fetch.Response{partitions: [%{message_set: messages}]}] ->
+      case :brod.fetch(endpoints, "foo", 0, starting_offset + 1) do
+        {:ok, messages} ->
           length(messages) == @length_known_records
         _ ->
           false

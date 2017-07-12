@@ -16,7 +16,7 @@ defmodule Db2Kafka.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :kafka_ex, :ex_statsd, :crypto, :poolboy],
+    [applications: [:logger, :ex_statsd, :crypto, :poolboy, :kaffe],
      included_applications: [:mariaex, :murmur, :poison, :erlzk],
      mod: {Db2Kafka, []}
     ]
@@ -25,7 +25,6 @@ defmodule Db2Kafka.Mixfile do
   defp deps do
     [
       {:mock, "~> 0.1.1", only: :test},
-      {:kafka_ex, "~> 0.5.0"},
       {:murmur, "~> 1.0"},
       {:mariaex, "~> 0.7.3"},
       {:ex_statsd, github: "PagerDuty/ex_statsd", ref: "a5c1aefd1d8d273e3910c2ae53c034669f792400"}, # Pulling in socket open fix
@@ -33,7 +32,8 @@ defmodule Db2Kafka.Mixfile do
       {:dialyxir, "~> 0.3.5", only: [:dev]},
       {:poison, "~> 2.0"},
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:erlzk, "~> 0.6.3"}
+      {:erlzk, "~> 0.6.3"},
+      {:kaffe, "~> 1.0", github: "PagerDuty/kaffe", ref: "18c867ee2ba2613e2c227a4e7d44c84bf36189ad"}
     ]
   end
 
