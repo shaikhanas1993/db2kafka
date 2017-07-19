@@ -26,6 +26,3 @@ erl_crash.dump
 # PLT cache dir
 .plts
 doc
-
-# vim files
-.*.sw?

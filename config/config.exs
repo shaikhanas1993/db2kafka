@@ -22,13 +22,12 @@ config :db2kafka,
   primary_region: System.get_env("PRIMARY_REGION") || "us-west-2",       # The preferred region
   region: System.get_env("REGION") || "us-west-2"                        # Region this app is running in
 
-config :kaffe,
-  producer: [
-    endpoints: [
-      {((System.get_env("BROKER_HOST") || "localhost") |> String.to_atom),
-        (System.get_env("BROKER_PORT") || "9092") |> String.to_integer
-      }
-    ], # [hostname: port]
-    required_acks: -1,
-    topics: (System.get_env("TOPICS") || "foo") |> String.split(","),
-  ]
+config :kafka_ex,
+  brokers: [
+    { System.get_env("BROKER_HOST") || "localhost",                      # A Kafka bootstrap broker hostname
+     (System.get_env("BROKER_PORT") || "9092") |> String.to_integer}     # A Kafka bootstrap broker port
+  ],
+  # Tweak kafka_ex for our needs - don't override unless you know exactly what's going on!
+  consumer_group: :no_consumer_group,
+  disable_default_worker: false
+
