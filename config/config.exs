@@ -20,7 +20,9 @@ config :db2kafka,
   ],
   barrier_path: "/db2kafka_failover_barrier",
   primary_region: System.get_env("PRIMARY_REGION") || "us-west-2",       # The preferred region
-  region: System.get_env("REGION") || "us-west-2"                        # Region this app is running in
+  region: System.get_env("REGION") || "us-west-2",                       # Region this app is running in
+  publish_latency_sla_95perc_threshold_ms: 10000,
+  publish_latency_sla_max_threshold_ms: 30000
 
 config :kafka_ex,
   brokers: [
