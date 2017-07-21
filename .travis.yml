@@ -42,3 +42,5 @@ script:
   - mix test --only unit --no-start
   - mix test --only integration --no-start
   - mix test --only logging --no-start
+after_success:
+  - ./.travis_release.sh

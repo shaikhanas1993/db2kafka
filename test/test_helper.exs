@@ -196,5 +196,5 @@ defmodule FailoverMocks do
   end
 end
 
-Application.start(:ex_statsd)
+Application.start(:ex_statsd_pd)
 ExUnit.start([capture_log: true])
