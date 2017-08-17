@@ -35,6 +35,8 @@ defmodule Db2Kafka.Mixfile do
       {:poison, "~> 2.0"},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:erlzk, "~> 0.6.3"}
+      {:erlzk, "~> 0.6.3"},
+      {:kaffe, "~> 1.0", github: "PagerDuty/kaffe", ref: "aab5da113841b461df977222147b0cf640d6cbce"}
     ]
   end
 
