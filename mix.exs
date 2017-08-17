@@ -17,7 +17,7 @@ defmodule Db2Kafka.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :kafka_ex, :ex_statsd_pd, :crypto, :poolboy],
+    [applications: [:logger, :kaffe, :ex_statsd_pd, :crypto, :poolboy],
      included_applications: [:mariaex, :murmur, :poison, :erlzk],
      mod: {Db2Kafka, []}
     ]
