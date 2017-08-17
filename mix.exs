@@ -26,7 +26,6 @@ defmodule Db2Kafka.Mixfile do
   defp deps do
     [
       {:mock, "~> 0.1.1", only: :test},
-      {:kafka_ex, "~> 0.5.0"},
       {:murmur, "~> 1.0"},
       {:mariaex, "~> 0.7.3"},
       {:ex_statsd_pd, "~> 0.6.0"}, # using PD version of the lib as the maintainers hasn't published a new release yet
@@ -34,9 +33,8 @@ defmodule Db2Kafka.Mixfile do
       {:dialyxir, "~> 0.3.5", only: [:dev]},
       {:poison, "~> 2.0"},
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:erlzk, "~> 0.6.3"}
       {:erlzk, "~> 0.6.3"},
-      {:kaffe, "~> 1.0", github: "PagerDuty/kaffe", ref: "aab5da113841b461df977222147b0cf640d6cbce"}
+      {:kaffe, "~> 1.3.1"}
     ]
   end
 
