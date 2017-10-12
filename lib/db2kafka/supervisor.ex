@@ -21,9 +21,6 @@ defmodule Db2Kafka.Supervisor do
   def init(:ok) do
     topics = Application.get_env(:db2kafka, :topics)
 
-    children = [worker(Db2Kafka.RecordAccessor, [])]
-    children = children ++ [worker(Db2Kafka.RecordBuffer, [])]
-
     deleter_pool_config = [
       {:name, {:local, deleter_pool_name()}},
       {:worker_module, Db2Kafka.RecordDeleter},
@@ -38,17 +35,14 @@ defmodule Db2Kafka.Supervisor do
       {:max_overflow, 5}
     ]
 
-    children = children ++ [
-      :poolboy.child_spec(deleter_pool_name(), deleter_pool_config, [])
-    ]
-
-    children = children ++ [
-      :poolboy.child_spec(publisher_pool_name(), publisher_pool_config, [])
-    ]
-
-    children = children ++ Enum.map(topics, fn(topic) ->
+    children = [
+      worker(Db2Kafka.RecordAccessor, []),
+      worker(Db2Kafka.RecordBuffer, []),
+      :poolboy.child_spec(deleter_pool_name(), deleter_pool_config, []),
+      :poolboy.child_spec(publisher_pool_name(), publisher_pool_config, []),
+    ] ++ for topic <- topics do
       worker(Db2Kafka.TopicSupervisor, [topic], id: topic)
-    end)
+    end
 
     # if the application restarts twice inside 200 seconds, it will terminate
     supervise(children, strategy: :one_for_all, max_restarts: 1, max_seconds: 200)
