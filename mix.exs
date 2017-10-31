@@ -18,7 +18,7 @@ defmodule Db2Kafka.Mixfile do
 
   def application do
     [applications: [:logger, :kafka_ex, :ex_statsd_pd, :crypto, :poolboy],
-     included_applications: [:mariaex, :murmur, :poison, :erlzk],
+     included_applications: [:mariaex, :murmur, :poison, :pd_erlzk],
      mod: {Db2Kafka, []}
     ]
   end
@@ -34,7 +34,7 @@ defmodule Db2Kafka.Mixfile do
       {:dialyxir, "~> 0.3.5", only: [:dev]},
       {:poison, "~> 2.0"},
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:erlzk, "~> 0.6.3"}
+      {:pd_erlzk, "~> 0.6.4"} # using PD version of the lib as the maintainers hasn't published a new release yet
     ]
   end
 
