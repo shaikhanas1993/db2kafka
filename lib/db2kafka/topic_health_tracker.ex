@@ -12,7 +12,7 @@ defmodule Db2Kafka.TopicHealthTracker do
   use GenServer
   require Logger
 
-  @progress_period_s 60
+  @progress_period_s 30
 
   @type t :: %Db2Kafka.TopicHealthTracker{
     topic: String.t,
