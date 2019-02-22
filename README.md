@@ -22,7 +22,7 @@ issues if there's something specific missing so we can hone our efforts.
 
 Setup:
 ```sh
-asdf intall
+asdf install
 mix deps.get
 ```
 Run:
