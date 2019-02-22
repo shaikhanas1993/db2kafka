@@ -92,13 +92,17 @@ defmodule Db2Kafka.RecordBuffer do
     {:reply, to_return, state}
   end
 
+  defp known_topics do
+    Application.get_env(:db2kafka, :topics)
+  end
+
   def handle_cast({:get_records_result, {:ok, records}}, _) do
     # Track records that are being sent downstream
     downstream_ids = Enum.reduce(records, %MapSet{}, fn(r, d_ids) ->
       MapSet.put(d_ids, r.id)
     end)
 
-    known_topics = Application.get_env(:db2kafka, :topics)
+    known_topics = known_topics()
     {records_in_known_topics, records_to_delete} = Enum.split_with(records, fn(r) -> Enum.member?(known_topics, r.topic) end)
 
     records_to_delete_length = length(records_to_delete)

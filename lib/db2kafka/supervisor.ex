@@ -18,8 +18,12 @@ defmodule Db2Kafka.Supervisor do
     :publisher_pool
   end
 
+  defp known_topics do
+    Application.get_env(:db2kafka, :topics)
+  end
+
   def init(:ok) do
-    topics = Application.get_env(:db2kafka, :topics)
+    topics = known_topics()
 
     children = [worker(Db2Kafka.RecordAccessor, [])]
     children = children ++ [worker(Db2Kafka.RecordBuffer, [])]

@@ -7,7 +7,7 @@ defmodule Db2Kafka.RecordDeleter do
   @records_to_delete_metric "db2kafka.records_to_delete"
   @records_deleted_metric "db2kafka.records_deleted"
   @delete_latency_metric "db2kafka.delete_latency"
-  @table "outbound_kafka_queue"
+  @default_table "outbound_kafka_queue"
   @delete_batch_size_metric "db2kafka.delete_batch_size"
 
   @spec start_link([]) :: GenServer.on_start
@@ -32,6 +32,10 @@ defmodule Db2Kafka.RecordDeleter do
     _ = Logger.info("DB connection started")
 
     {:ok, db_pid}
+  end
+
+  defp table do
+    Application.get_env(:db2kafka, :table) || @default_table
   end
 
   @spec delete_records(list(Db2Kafka.Record.t), boolean) :: atom
@@ -68,7 +72,7 @@ defmodule Db2Kafka.RecordDeleter do
     length(records) |> Db2Kafka.Stats.histogram(@delete_batch_size_metric)
 
     result = Db2Kafka.Stats.timing(@delete_record_metric, fn ->
-      Mariaex.query(db_pid, "DELETE FROM #{@table} WHERE id IN (#{joined_record_ids})")
+      Mariaex.query(db_pid, "DELETE FROM #{table()} WHERE id IN (#{joined_record_ids})")
     end)
 
     deletion_result =

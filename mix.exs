@@ -5,7 +5,7 @@ defmodule Db2Kafka.Mixfile do
   def project do
     [app: :db2kafka,
      version: "0.5.0",
-     elixir: "~> 1.4.1",
+     elixir: "~> 1.7.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),

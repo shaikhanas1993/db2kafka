@@ -5,9 +5,9 @@ defmodule Db2Kafka.RecordAccessor do
   @type deletion_result :: :ok | :error
   @type records_result :: {:ok, list(%Db2Kafka.Record{})} | {:error, String.t}
 
+  @default_table "outbound_kafka_queue"
   @get_records_metric "db2kafka.get_records"
   @records_fetched_metric "db2kafka.records_fetched"
-  @table "outbound_kafka_queue"
 
   @spec start_link() :: GenServer.on_start
   def start_link do
@@ -33,6 +33,10 @@ defmodule Db2Kafka.RecordAccessor do
     {:ok, db_pid}
   end
 
+  defp table do
+    Application.get_env(:db2kafka, :table) || @default_table
+  end
+
   # API
 
   @spec get_records_async(pid, integer) :: :ok
@@ -56,7 +60,7 @@ defmodule Db2Kafka.RecordAccessor do
   end
 
   def get_min_id(db_pid) do
-    result = Mariaex.query(db_pid, "SELECT MIN(id) FROM #{@table}")
+    result = Mariaex.query(db_pid, "SELECT MIN(id) FROM #{table()}")
     min_id_result =
       case result do
         {:ok, %Mariaex.Result{rows: [[nil]]}} ->
@@ -66,14 +70,14 @@ defmodule Db2Kafka.RecordAccessor do
           {:ok, rows_data}
         e ->
           message = "Unexpected error: #{inspect e}"
-          _ = Logger.error("Can't get the min_id in #{@table} - #{message}")
+          _ = Logger.error("Can't get the min_id in #{table()} - #{message}")
           {:error, message}
       end
     min_id_result
   end
 
   def get_records(min_id, id_space_partition_size, db_pid) do
-    query = "SELECT id, topic, item_key, item_body, unix_timestamp(created_at) FROM #{@table} " <>
+    query = "SELECT id, topic, item_key, item_body, unix_timestamp(created_at) FROM #{table()} " <>
             "WHERE id < #{min_id + id_space_partition_size}"
 
     result = Db2Kafka.Stats.timing(@get_records_metric, fn ->
