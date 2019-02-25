@@ -22,6 +22,8 @@ issues if there's something specific missing so we can hone our efforts.
 
 Setup:
 ```sh
+git clone git@github.com:PagerDuty/db2kafka.git && cd db2kafka
+git checkout AE-245-web2kafka
 asdf install
 mix deps.get
 ```
