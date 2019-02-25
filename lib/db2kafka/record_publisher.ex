@@ -45,7 +45,7 @@ defmodule Db2Kafka.RecordPublisher do
         required_acks: -1,
         timeout: 3_000,
         compression: :none,
-        messages: Enum.map(records, fn(r) -> %KafkaEx.Protocol.Produce.Message{key: "", value: r.body} end)
+        messages: Enum.map(records, fn(r) -> %KafkaEx.Protocol.Produce.Message{key: r.partition_key, value: r.body} end)
       }
       KafkaEx.produce(produce_request, [worker_name: kafka_pid])
     end)
