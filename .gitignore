@@ -26,3 +26,5 @@ erl_crash.dump
 # PLT cache dir
 .plts
 doc
+
+.DS_Store

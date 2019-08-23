@@ -17,14 +17,16 @@ defmodule Db2Kafka.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :kafka_ex, :ex_statsd_pd, :crypto, :poolboy],
-     included_applications: [:mariaex, :murmur, :poison, :pd_erlzk],
-     mod: {Db2Kafka, []}
+    [
+      applications: [:logger, :kafka_ex, :ex_statsd_pd, :crypto, :poolboy, :app_watcher],
+      included_applications: [:mariaex, :murmur, :poison, :pd_erlzk],
+      mod: {Db2Kafka, []}
     ]
   end
 
   defp deps do
     [
+      {:app_watcher, path: "./app_watcher"},
       {:mock, "~> 0.1.1", only: :test},
       {:kafka_ex, "~> 0.5.0"},
       {:murmur, "~> 1.0"},

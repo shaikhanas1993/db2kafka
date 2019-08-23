@@ -38,3 +38,6 @@ config :kafka_ex,
   consumer_group: :no_consumer_group,
   disable_default_worker: false
 
+
+config :app_watcher,
+  protected_app_name: :db2kafka
